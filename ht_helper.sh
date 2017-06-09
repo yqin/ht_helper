@@ -514,8 +514,8 @@ function Usage () {
     echo "    -s    interval between checks (default to 60s)"
     echo "    -t    provide a taskfile with list of tasks, one per line (required)"
     echo "          task could be a binary executable, or a script"
-    echo "          multiple steps can be semicolon separated"
-    echo "          env variable HT_TASK_ID (starts from 0) can be used with individual task"
+    echo "          multiple steps within the same task can be semicolon separated, but they have to remain on the same line"
+    echo "          env variable HT_TASK_ID (starts from 0) can be used with individual tasks"
     echo "    -v    verbose mode"
     echo "    -w    provide work directory (default to current directory)"
 }
