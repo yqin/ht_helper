@@ -64,7 +64,6 @@ a job script for a parallel job, except that you want to run command
 ## Running 8 serial tasks within a 4-CPU allocation
 
     taskfile:
-
 ```
     hostname
     date
@@ -77,7 +76,6 @@ a job script for a parallel job, except that you want to run command
 ```
 
     SLURM job script:
-
 ```
     #!/bin/bash
     #SBATCH --job-name=test
@@ -93,13 +91,11 @@ a job script for a parallel job, except that you want to run command
 ## Running 1000 OMP tasks with 2 threads per task on 8 12-core nodes
 
     taskfile:
-
 ```
     a.out $HT_TASK_ID
 ```
 
     SLURM job script:
-
 ```
     #!/bin/bash
     #SBATCH --job-name=test
@@ -123,7 +119,6 @@ a job script for a parallel job, except that you want to run command
 ```
 
     SLURM job script:
-
 ```
     #!/bin/bash
     #SBATCH --job-name=test
