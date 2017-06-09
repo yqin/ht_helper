@@ -500,8 +500,7 @@ function Clean () {
 
 
 function Usage () {
-    # TODO: -d and -k should be removed in future releases
-    echo "Usage: $0 [-dhLv] [-f hostfile] [-i list] [-l launcher] [-m modules] [-n # of slots per task] [-o launcher options] [-p # of parallel tasks] [-r # of repeat] [-s sleep] [-t taskfile] [-w wordir]"
+    echo "Usage: $0 [-hLv] [-f hostfile] [-i list] [-l launcher] [-m modules] [-n # of slots per task] [-o launcher options] [-p # of parallel tasks] [-r # of repeat] [-s sleep] [-t taskfile] [-w workdir]"
     echo "    -f    provide a hostfile with list of slots, one per line"
     echo "    -h    this help page"
     echo "    -i    provide list of tasks from the taskfile to run, e.g., 1-3,5,7-9"
@@ -523,6 +522,7 @@ function Usage () {
 
 
 # Retrieve command line options.
+# TODO: -d and -k should be removed in future releases
 while getopts ":dDf:hi:kl:Lm:n:o:p:r:s:t:vw:" OPT; do
     case $OPT in
         d)
