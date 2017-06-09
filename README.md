@@ -1,16 +1,17 @@
-# High-Throughput Computing (HTC)
+# High-Throughput Computing (HTC) with HT Helper
 If you have a set of common tasks that you would like to perform on the cluster,
 and these tasks share the common characteristics of short duration and you have
 a decent number of them, they fall into the category of High-Throughput
 Computing (HTC). Typical applications such as parameter/configuration scanning,
 divide and conquer approach can all be categorized in this section. Resolving an
-HTC problem isn't easy on a traditional HPC cluster with time and resource
-limits. However, within the rooms that one can maneuver, there are still some
-choices, here we demonstrate one approach by using the "ht_helper.sh" (HT
-Helper) script that HPCS provides. The idea of the "ht_helper.sh" script is to
-fire a FIFO mini scheduler within a real scheduler allocation (SLURM or PBS),
-then cycle through all the tasks within the real scheduler allocation by using
-the mini scheduler. These tasks could be either serial or parallel.
+HTC problem isn't easy on a traditional High-Performance Computing (HPC) cluster
+with time and resource constraints. However, within the rooms that one can
+maneuver, there are still some choices. HT Helper is designed to satisfy the
+exact requirement by running HTC workloads within an HPC environment. The idea
+of the HT Helper is to fire a FIFO mini scheduler within a real scheduler
+allocation (SLURM, PBS, or a hostfile), then cycle through all the tasks within
+the allocation by using the mini scheduler. These tasks could be either serial
+or parallel.
 
 # Usage
 ```
@@ -37,7 +38,7 @@ Usage: ./ht_helper.sh [-dhLv] [-f hostfile] [-i list] [-l launcher] [-m modules]
 
 To use the helper script you will need to prepare a taskfile and a job script
 file. The taskfile will contain all the tasks that you need to run. If a self
-identifier is desired for each task, environment variable "$HT_TASK_ID" can be
+identifier is desired for each task, environment variable *$HT_TASK_ID* can be
 used in the taskfile, or any of the subsequent scripts. The taskfile takes three
 types of input as showed in the usage page. If you are running MPI type of
 tasks, please make sure not to have the mpirun command in the taskfile, instead
@@ -60,7 +61,7 @@ a job script for a parallel job, except that you want to run command
 "ht_helper.sh" on the taskfile that was just prepared instead of anything else.
 
 # Example
-## Running an 8-task serial job within a 4-CPU allocation.
+## Running 8 serial tasks within a 4-CPU allocation
 
     taskfile:
 
@@ -87,4 +88,51 @@ a job script for a parallel job, except that you want to run command
     #SBATCH --time=00:05:00
 
     ht_helper.sh -t taskfile -n1 -s1 -vL
+```
+
+## Running 1000 OMP tasks with 2 threads per task on 8 12-core nodes
+
+    taskfile:
+
+```
+    a.out $HT_TASK_ID
+```
+
+    SLURM job script:
+
+```
+    #!/bin/bash
+    #SBATCH --job-name=test
+    #SBATCH --partition=test
+    #SBATCH --qos=debug
+    #SBATCH --account=abc
+    #SBATCH --nodes=8
+    #SBATCH --ntasks-per-node=6
+    #SBATCH --cpus-per-task=2
+    #SBATCH --time=00:05:00
+
+    export OMP_NUM_THREADS=2
+    ht_helper.sh -t taskfile -r1000 -n1 -vL
+```
+
+## Running MPI tasks 1-3, 7, 9-15 with 4 processors per task on 2 12-core nodes
+
+    taskfile
+```
+    a.out $HT_TASK_ID
+```
+
+    SLURM job script:
+
+```
+    #!/bin/bash
+    #SBATCH --job-name=test
+    #SBATCH --partition=test
+    #SBATCH --qos=debug
+    #SBATCH --account=abc
+    #SBATCH --nodes=2
+    #SBATCH --ntasks-per-node=12
+    #SBATCH --time=00:05:00
+
+    ht_helper.sh -t taskfile -i 1-3,7,9-15 -n4 -vL
 ```
