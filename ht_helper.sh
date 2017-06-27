@@ -28,15 +28,15 @@ MODULES=""
 VERSION="2.0 (May 17, 2017)"
 
 # IDs of all tasks (indexed array)
-TASKS_ID=( )
+declare -a TASKS_ID
 # All tasks (associative array)
-TASKS=( )
+declare -A TASKS
 # Exit status of all tasks (associative array)
-TASKS_EXIT=( )
+declare -A TASKS_EXIT
 # IDs of running tasks
-RUN_ID=( )
+declare -a RUN_ID
 # PIDs of running tasks
-RUN_PID=( )
+declare -a RUN_PID
 
 # # of times to repeat taskfile (to generate duplicate tasks)
 N_REPEAT=1
@@ -250,21 +250,25 @@ function Init () {
 
     # Check hostfile.
     if [[ ! -r ${HOSTFILE} ]]; then
-        Error 1 "HOSTFILE is not accessible!"
+        Error 1 "${HOSTFILE} is not accessible!"
     fi
 
     # Check taskfile.
     if [[ -z ${TASKFILE} ]]; then
-        Error 1 "TASKFILE is not provided!"
+        Error 1 "${TASKFILE} is not provided!"
     fi
 
     if [[ ! -r ${TASKFILE} ]]; then
-        Error 1 "TASKFILE is not accessible!"
+        Error 1 "${TASKFILE} is not accessible!"
     fi
 
     # Load taskfile.
+    Info "Processing ${TASKFILE}"
     LoadFile "${TASKFILE}"
+    Info "${TASKFILE} processed"
+
     local n=${#RETURNVAL[*]}
+    Debug "$n tasks loaded from ${TASKFILE}"
 
     # If list of TASKS_ID not provided, initialize it.
     if [[ ${#TASKS_ID[*]} -eq 0 ]]; then
@@ -273,10 +277,14 @@ function Init () {
         done
     fi
 
+    Debug "${#TASKS_ID[*]} task IDs initialized"
+
     # Populate tasks.
     for i in ${TASKS_ID[*]}; do
         TASKS[$i]=${RETURNVAL[((i % n))]}
     done
+
+    Debug "${#TASKS[*]} tasks initialized"
 
     N_TASKS=${#TASKS[*]}
     if [[ ${N_TASKS} -lt 1 ]]; then
