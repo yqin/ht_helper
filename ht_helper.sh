@@ -390,6 +390,9 @@ function Run () {
                     if [[ ${TASKS_EXIT[${HT_TASK_ID}]} -eq 0 ]]; then
                         HT_TASK_STATUS="succeeded"
                         N_SUCCESS=$((${N_SUCCESS} + 1))
+
+                        Debug "Removing taskfile ${TASKFILE_PREFIX}.${HT_TASK_ID}"
+                        rm -f "${TASKFILE_PREFIX}.${HT_TASK_ID}"
                     else
                         HT_TASK_STATUS="failed (exit code: ${TASKS_EXIT[${HT_TASK_ID}]})"
                     fi
@@ -411,6 +414,7 @@ function Run () {
                 HT_TASK_ID=${TASKS_ID[${N_START}]}
                 if [[ ${N_START} -lt ${N_TASKS} ]]; then
                     # Compose and run a new task, store its PID in ${RUN_PID[$i]}.
+                    Debug "Building taskfile ${TASKFILE_PREFIX}.${HT_TASK_ID}"
                     BuildTask "${HT_TASK_ID}"
     
                     local LAUNCHER_EXT="${LAUNCHER_OPT}"
