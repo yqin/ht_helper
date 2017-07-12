@@ -23,6 +23,8 @@ WORKDIR=""
 HOSTFILE_PREFIX=""
 TASKFILE_PREFIX=""
 LOGFILE_PREFIX=""
+# Extra env variables
+ENVVARS=""
 # Extra env modules to load
 MODULES=""
 VERSION="2.0 (May 17, 2017)"
@@ -180,8 +182,8 @@ function LoadFile () {
 
 # Initialize the HTC mini scheduler.
 function Init () {
-    if [[ -z ${WORKDIR} ]]; then
-        WORKDIR=${PWD}
+    if [[ -z "${WORKDIR}" ]]; then
+        WORKDIR="${PWD}"
     fi
 
     if [[ -n ${SLURM_JOB_ID} ]]; then
@@ -190,12 +192,12 @@ function Init () {
             LAUNCHER="mpirun"
         fi
 
-        HOSTFILE_PREFIX=${WORKDIR}/${SLURM_JOB_NAME##*/}.${SLURM_JOB_ID}.host
-        TASKFILE_PREFIX=${WORKDIR}/${SLURM_JOB_NAME##*/}.${SLURM_JOB_ID}.task
-        LOGFILE_PREFIX=${WORKDIR}/${SLURM_JOB_NAME##*/}.${SLURM_JOB_ID}.log
+        HOSTFILE_PREFIX="${WORKDIR}"/${SLURM_JOB_NAME##*/}.${SLURM_JOB_ID}.host
+        TASKFILE_PREFIX="${WORKDIR}"/${SLURM_JOB_NAME##*/}.${SLURM_JOB_ID}.task
+        LOGFILE_PREFIX="${WORKDIR}"/${SLURM_JOB_NAME##*/}.${SLURM_JOB_ID}.log
 
-        HOSTFILE=${HOSTFILE_PREFIX}
-        srun /bin/hostname | sort > ${HOSTFILE}
+        HOSTFILE="${HOSTFILE_PREFIX}"
+        srun /bin/hostname | sort > "${HOSTFILE}"
 
         if [[ $? -ne 0 ]]; then
             Error 1 "Error on generating HOSTFILE!"
@@ -206,12 +208,12 @@ function Init () {
             LAUNCHER="mpirun"
         fi
 
-        HOSTFILE_PREFIX=${WORKDIR}/${PBS_JOBNAME}.${PBS_JOBID}.host
-        TASKFILE_PREFIX=${WORKDIR}/${PBS_JOBNAME}.${PBS_JOBID}.task
-        LOGFILE_PREFIX=${WORKDIR}/${PBS_JOBNAME}.${PBS_JOBID}.log
+        HOSTFILE_PREFIX="${WORKDIR}"/${PBS_JOBNAME}.${PBS_JOBID}.host
+        TASKFILE_PREFIX="${WORKDIR}"/${PBS_JOBNAME}.${PBS_JOBID}.task
+        LOGFILE_PREFIX="${WORKDIR}"/${PBS_JOBNAME}.${PBS_JOBID}.log
 
-        HOSTFILE=${HOSTFILE_PREFIX}
-        cat $PBS_NODEFILE | sort > ${HOSTFILE}
+        HOSTFILE="${HOSTFILE_PREFIX}"
+        cat $PBS_NODEFILE | sort > "${HOSTFILE}"
 
         if [[ $? -ne 0 ]]; then
             Error 1 "Error on generating HOSTFILE!"
@@ -222,11 +224,11 @@ function Init () {
             LAUNCHER="mpirun"
         fi
 
-        HOSTFILE_PREFIX=${WORKDIR}/$$.host
-        TASKFILE_PREFIX=${WORKDIR}/$$.task
-        LOGFILE_PREFIX=${WORKDIR}/$$.log
+        HOSTFILE_PREFIX="${WORKDIR}"/$$.host
+        TASKFILE_PREFIX="${WORKDIR}"/$$.task
+        LOGFILE_PREFIX="${WORKDIR}"/$$.log
 
-        if [[ -z ${HOSTFILE} ]]; then
+        if [[ -z "${HOSTFILE}" ]]; then
             Error 1 "HOSTFILE is not provided and a scheduler allocation is not detected!"
         fi
     fi
@@ -332,10 +334,27 @@ function Init () {
 # $1 is current task id (HT_TASK_ID)
 function BuildTask () {
     local HT_TASK_ID=$1
+
     cat > "${TASKFILE_PREFIX}.${HT_TASK_ID}" << EOF
 #!${SHELL}
+EOF
+
+    if [[ -n ${ENVVARS} ]]; then
+        cat >> "${TASKFILE_PREFIX}.${HT_TASK_ID}" << EOF
+export ${ENVVARS}
+EOF
+    fi
+
+    if [[ -n ${MODULES} ]]; then
+        cat >> "${TASKFILE_PREFIX}.${HT_TASK_ID}" << EOF
+module load ${MODULES}
+EOF
+    fi
+
+    cat >> "${TASKFILE_PREFIX}.${HT_TASK_ID}" << EOF
 ${TASKS[${HT_TASK_ID}]}
 EOF
+
     chmod +x "${TASKFILE_PREFIX}.${HT_TASK_ID}"
 }
 
@@ -366,9 +385,14 @@ function Run () {
         RUN_PID[$i]=-1
     done
     
+    # Export necessary environment variables.
+    if [[ -n ${ENVVARS} ]]; then
+        export ${ENVVARS}
+    fi
+
     # Load necessary modules.
     if [[ -n ${MODULES} ]]; then
-        module load "${MODULES}"
+        module load ${MODULES}
     fi
 
     # Mini scheduler.
@@ -392,7 +416,9 @@ function Run () {
                         N_SUCCESS=$((${N_SUCCESS} + 1))
 
                         Debug "Removing taskfile ${TASKFILE_PREFIX}.${HT_TASK_ID}"
-                        rm -f "${TASKFILE_PREFIX}.${HT_TASK_ID}"
+                        if [[ $DEBUG -eq 0 ]]; then
+                            rm -f "${TASKFILE_PREFIX}.${HT_TASK_ID}"
+                        fi
                     else
                         HT_TASK_STATUS="failed (exit code: ${TASKS_EXIT[${HT_TASK_ID}]})"
                     fi
@@ -485,7 +511,7 @@ function PrepMPI () {
     fi
     MPIRUN=`which mpirun 2>/dev/null`
     if [[ $? -ne 0 ]]; then
-        Error 1 "Cannot locate Open MPI!"
+        Error 1 "Cannot locate mpirun, please load it with \"module load openmpi\", or equivalent, before running $0!"
     fi
     OPENMPI_DIR=${OPENMPI_DIR:-$MPIDIR}
     if [[ -z $OPENMPI_DIR ]]; then
@@ -512,7 +538,8 @@ function Clean () {
 
 
 function Usage () {
-    echo "Usage: $0 [-hLv] [-f hostfile] [-i list] [-l launcher] [-m modules] [-n # of slots per task] [-o launcher options] [-p # of parallel tasks] [-r # of repeat] [-s sleep] [-t taskfile] [-w workdir]"
+    echo "Usage: $0 [-hLv] [-e variables] [-f hostfile] [-i list] [-l launcher] [-m modules] [-n # of slots per task] [-o launcher options] [-p # of parallel tasks] [-r # of repeat] [-s sleep] [-t taskfile] [-w workdir]"
+    echo "    -e    provide env variables to be populated for tasks (comma separated)"
     echo "    -f    provide a hostfile with list of slots, one per line"
     echo "    -h    this help page"
     echo "    -i    provide list of tasks from the taskfile to run, e.g., 1-3,5,7-9"
@@ -535,7 +562,7 @@ function Usage () {
 
 # Retrieve command line options.
 # TODO: -d and -k should be removed in future releases
-while getopts ":dDf:hi:kl:Lm:n:o:p:r:s:t:vw:" OPT; do
+while getopts ":dDe:f:hi:kl:Lm:n:o:p:r:s:t:vw:" OPT; do
     case $OPT in
         d)
             Warning "\"-d\" has been deprecated, please use \"-L\" instead"
@@ -543,6 +570,9 @@ while getopts ":dDf:hi:kl:Lm:n:o:p:r:s:t:vw:" OPT; do
             ;;
         D)
             DEBUG=1
+            ;;
+        e)
+            ENVVARS=${OPTARG//,/ }
             ;;
         f)
             if [[ -f ${OPTARG} ]]; then
