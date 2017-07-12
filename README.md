@@ -16,7 +16,8 @@ or parallel.
 # Usage
 ```
 [joe@n0000 ]$ ht_helper.sh -h
-Usage: ./ht_helper.sh [-dhLv] [-f hostfile] [-i list] [-l launcher] [-m modules] [-n # of slots per task] [-o launcher options] [-p # of parallel tasks] [-r # of repeat] [-s sleep] [-t taskfile] [-w wordir]
+Usage: ./ht_helper.sh [-hLv] [-e variables] [-f hostfile] [-i list] [-l launcher] [-m modules] [-n # of slots per task] [-o launcher options] [-p # of parallel tasks] [-r # of repeat] [-s sleep] [-t taskfile] [-w workdir]
+    -e    provide env variables to be populated for tasks (comma separated)
     -f    provide a hostfile with list of slots, one per line
     -h    this help page
     -i    provide list of tasks from the taskfile to run, e.g., 1-3,5,7-9
