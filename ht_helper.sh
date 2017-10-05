@@ -509,17 +509,26 @@ function PrepMPI () {
     if [[ $? -ne 0 ]]; then
         module load openmpi >/dev/null 2>&1
     fi
-    MPIRUN=`which mpirun 2>/dev/null`
+
+    local MPIRUN=`which mpirun 2>/dev/null`
     if [[ $? -ne 0 ]]; then
         Error 1 "Cannot locate mpirun, please load it with \"module load openmpi\", or equivalent, before running $0!"
     fi
-    OPENMPI_DIR=${OPENMPI_DIR:-$MPIDIR}
+
+    local OPENMPI_DIR=${OPENMPI_DIR:-$MPIDIR}
     if [[ -z $OPENMPI_DIR ]]; then
         Warning "Open MPI prefix not defined, try without ..."
     fi
-    if [[ -n $OPENMPI_DIR ]]; then
+
+    local OPENMPI_VER=`mpirun -V 2>&1 | awk 'NR==1{print $4}'`
+    Debug "Using Open MPI (${OPENMPI_VER}) from ${OPENMPI_DIR}"
+
+    if [[ ${OPENMPI_VER} == 1.6.* ]]; then
         LAUNCHER_OPT="-prefix $OPENMPI_DIR ${LAUNCHER_OPT}"
+    else
+        LAUNCHER_OPT="-prefix $OPENMPI_DIR -bind-to none ${LAUNCHER_OPT}"
     fi
+    Debug "Open MPI option: ${LAUNCHER_OPT}"
 }
 
 
