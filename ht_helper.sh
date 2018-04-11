@@ -555,7 +555,7 @@ function Usage () {
     echo "    -l    override system launcher (mpirun only for now)"
     echo "    -L    log task stdout/stderr to individual files"
     echo "    -m    provide env modules to be loaded for tasks (comma separated)"
-    echo "    -n    provide number of slots per task"
+    echo "    -n    provide number of slots per task; slots are execution units such as MPI processes and this flag is not intended for specifying the number of processors/cpus per task"
     echo "    -o    provide extra launcher options, e.g., \"-mca btl openib,sm,self\""
     echo "    -p    provide number of parallel tasks"
     echo "    -r    provide repeat number for taskfile"

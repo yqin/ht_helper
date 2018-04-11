@@ -24,7 +24,7 @@ Usage: ./ht_helper.sh [-hLv] [-e variables] [-f hostfile] [-i list] [-l launcher
     -l    override system launcher (mpirun only for now)
     -L    log task stdout/stderr to individual files
     -m    provide env modules to be loaded for tasks (comma separated)
-    -n    provide number of slots per task
+    -n    provide number of slots per task; slots are execution units such as MPI processes and this flag is not intended for specifying the number of processors/cpus per task
     -o    provide extra launcher options, e.g., "-mca btl openib,sm,self"
     -p    provide number of parallel tasks
     -r    provide repeat number for taskfile
@@ -47,9 +47,11 @@ you only need to input the actual executable and input options. If mpirun
 command line options are required please provide them via the "-o" option. For
 users running parallel tasks, please make sure to turn off CPU affinity
 settings, if any, to avoid conflicts and serious oversubscription of CPUs. The
-next important parameter is the "-n" option - how many processors/cpus you want
-to allocate for each task, the default value is "1" for serial tasks if not
-provided. If you are running short-duration tasks (less than a few minutes), you
+next important parameter is the "-n" option - how many execution units or 'slots'
+(e.g., MPI processes) you want to run for each task; note that slots is not
+equivalent to cpus/processors and the default value of "1" should be used for
+both serial tasks and for non-MPI threaded/multi-core tasks. 
+If you are running short-duration tasks (less than a few minutes), you
 may also want to reduce the default mini scheduler scan interval from 60 seconds
 to a smaller value with the "-s" option. If you are running within an SLURM or
 PBS allocation, please do not specify the hostfile with "-f" option which may
@@ -112,7 +114,7 @@ a job script for a parallel job, except that you want to run command
     ht_helper.sh -t taskfile -r1000 -n1 -vL
 ```
 
-## Running MPI tasks 1-3, 7, 9-15 with 4 processors per task on 2 12-core nodes
+## Running MPI-based tasks 1-3, 7, 9-15 with 4 MPI processes per ht_helper task on 2 12-core nodes
 
     taskfile
 ```
